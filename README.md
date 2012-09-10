@@ -3,6 +3,8 @@ albumview
 
 WebGL Album View
 
+Right now this is nothing more than a proof-of-concept. It will need more work to be someone you'd want to use.
+
 Demo
 ====
 
