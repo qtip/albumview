@@ -68,7 +68,7 @@ function AlbumView(canvasEl) {
     this.matPerspective = mat4.create();
     mat4.perspective(35, canvasEl.width/(canvasEl.height != 0 ? canvasEl.height : 1.0), 1, 100, this.matPerspective);
     this.matOrtho = mat4.create();
-    mat4.ortho(0,canvasEl.width, canvas.height, 0, -1, 1, this.matOrtho);
+    mat4.ortho(0,canvasEl.width, canvasEl.height, 0, -1, 1, this.matOrtho);
     this.gl = canvasEl.getContext("webgl") || canvasEl.getContext("experimental-webgl");
     this.squareBuffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.squareBuffer);
