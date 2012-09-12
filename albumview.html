@@ -30,13 +30,27 @@
       color: #333;
       font-family: sans-serif;
     }
+    #albumview canvas {
+      z-index: -100;
+    }
+    #albumview p {
+      position: relative;
+      text-align: center;
+      top: -130px;
+      font-weight: bold;
+      z-index: 100;
+      display:block;
+    }
   </style>
 </head>
 <body>
   <h1>Album View in WebGL</h1>
   <span>(click &amp; drag)</span>
   <div id="container">
-    <canvas id="canvas" width="1024" height="512"></canvas>
+    <div id="albumview">
+      <canvas id="canvas" width="1024" height="512"></canvas>
+      <p id="display-text">&nbsp;</p>
+    </div>
     <div class="description">
       <p>
         This is a work-in-progress example of a clone of the album view in popular music players.
@@ -53,8 +67,18 @@
 
   <script type="text/javascript">
     var albumview = new AlbumView(document.getElementById('canvas'));
-    albumview.addItem("test", function(){alert('test click');});
-    albumview.addItem("test2", function(){alert('test click2');});
+    albumview.push({'title': "Daniel Snider: Best album evar"});
+    albumview.push({'title': "The One Ups: Volume 1", 'img': 'Volume+1.png'});
+    albumview.push({'title': "The One Ups: Volume 2", 'img': 'Volume+2.jpg'});
+    albumview.push({'title': "Anamanaguchi: Power Supply", 'img': 'Power+Supply.png'});
+    albumview.push({'title': "Anamanaguchi: Dawn Metropolis", 'img': 'Dawn+Metropolis.png'});
+    albumview.push({'title': "Daniel Snider: Second-to-best album"});
+    albumview.push({'title': "Daniel Snider: He can do better than this"});
+    albumview.offset = 3;
+    //albumview.push({'title': "Daniel Snider: Greatest hits"});
+    albumview.onSelected = function(item){
+      document.getElementById('display-text').innerText = item.title;
+    };
   </script>
 </body>
 </html>
