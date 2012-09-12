@@ -36,7 +36,7 @@ function AlbumView(canvasEl) {
     this.mousePosDelta = {x:0, y:0};
     this.isMouseDown = false;
     this.mouseDownPos = {x:0, y:0};
-    this.offset = 3.0;
+    this.offset = 0.0;
     this.currentAnimationFrameRequest = null;
     canvasEl.onmousemove = function(e){
         thiss.mousePosDelta.x = e.offsetX - thiss.mousePos.x;
@@ -188,13 +188,33 @@ AlbumView.prototype.animloop = function(thiss){
         } else {
             thiss.offset = Math.round(thiss.offset);
             cancelAnimFrame(thiss.currentAnimationFrameRequest);
+            if (thiss.items[thiss.offset] !== undefined && thiss.onSelected !== null){
+                thiss.onSelected(thiss.items[thiss.offset], thiss);
+            }
         }
         thiss.draw(thiss.offset);
     }
 };
 
-AlbumView.prototype.addItem = function(text, onclick){
-    
+AlbumView.prototype.push = function(item){
+    var thiss = this;
+    if ("img" in item){
+        item.__image = new Image();
+        item.__image.src = item.img;
+        item.__texture = this.gl.createTexture();
+        item.__isTextureLoaded = false;
+        item.__image.onload = function(){
+            item.__isTextureLoaded = true;
+            thiss.beginAnimLoop();
+            thiss.gl.bindTexture(thiss.gl.TEXTURE_2D, item.__texture);
+            thiss.gl.pixelStorei(thiss.gl.UNPACK_FLIP_Y_WEBGL, false);
+            // Upload the texture data to the hardware.
+            thiss.gl.texImage2D(thiss.gl.TEXTURE_2D, 0, thiss.gl.RGBA, thiss.gl.RGBA, thiss.gl.UNSIGNED_BYTE, item.__image);
+            thiss.gl.texParameteri(thiss.gl.TEXTURE_2D, thiss.gl.TEXTURE_MAG_FILTER, thiss.gl.NEAREST);
+            thiss.gl.texParameteri(thiss.gl.TEXTURE_2D, thiss.gl.TEXTURE_MIN_FILTER, thiss.gl.NEAREST);
+        }
+    }
+    this.items.push(item);
 };
 
 function makeMatModelView(offset){
@@ -218,9 +238,13 @@ AlbumView.prototype.draw = function(offset){
     //reflection
     this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram, "uMirrorMode"), 1);
     var i;
-    for (i = 0; i <= 7; i++){
+    for (i = 0; i < this.items.length; i++){
         this.gl.activeTexture(this.gl.TEXTURE0);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.noteTexture);
+        if (this.items[i] !== undefined && this.items[i].__image !== undefined && this.items[i].__isTextureLoaded){
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.items[i].__texture);
+        } else {
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.noteTexture);
+        }
         this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram, "uTextureSampler"), 0);
 
         this.gl.uniformMatrix4fv(this.gl.getUniformLocation(this.shaderProgram, "uModelView"), false, makeMatModelView(i-offset));
@@ -229,9 +253,13 @@ AlbumView.prototype.draw = function(offset){
     this.gl.clear(this.gl.DEPTH_BUFFER_BIT);
     //album covers
     this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram, "uMirrorMode"), 0);
-    for (i = 0; i <= 7; i++){
+    for (i = 0; i < this.items.length; i++){
         this.gl.activeTexture(this.gl.TEXTURE0);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.noteTexture);
+        if (this.items[i] !== undefined && this.items[i].__image !== undefined && this.items[i].__isTextureLoaded){
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.items[i].__texture);
+        } else {
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.noteTexture);
+        }
         this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgram, "uTextureSampler"), 0);
 
         this.gl.uniformMatrix4fv(this.gl.getUniformLocation(this.shaderProgram, "uModelView"), false, makeMatModelView(i-offset));
