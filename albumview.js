@@ -16,13 +16,16 @@ var requestAnimFrame = (function(){
             window.webkitRequestAnimationFrame || 
             window.mozRequestAnimationFrame    || 
             window.oRequestAnimationFrame      || 
-            window.msRequestAnimationFrame     || 
-            function( callback ){
-                window.setTimeout(callback, 1000 / 60);
-            };
+            window.msRequestAnimationFrame;
 })();
 
-
+var cancelAnimFrame = (function(){
+    return  window.cancelAnimationFrame       || 
+            window.webkitCancelAnimationFrame || 
+            window.mozCancelAnimationFrame    || 
+            window.oCancelAnimationFrame      || 
+            window.msCancelAnimationFrame;
+})();
 
 function AlbumView(canvasEl) {
     var thiss = this;
@@ -34,6 +37,7 @@ function AlbumView(canvasEl) {
     this.isMouseDown = false;
     this.mouseDownPos = {x:0, y:0};
     this.offset = 3.0;
+    this.currentAnimationFrameRequest = null;
     canvasEl.onmousemove = function(e){
         thiss.mousePosDelta.x = e.offsetX - thiss.mousePos.x;
         thiss.mousePosDelta.y = e.offsetY - thiss.mousePos.y;
@@ -51,6 +55,7 @@ function AlbumView(canvasEl) {
         }
     };
     canvasEl.onmousedown = function(e){
+        thiss.beginAnimLoop();
         thiss.isMouseDown = true;
         thiss.mouseDownPos.x = e.offsetX || e.layerX;
         thiss.mouseDownPos.y = e.offsetY || e.layerY;
@@ -77,6 +82,7 @@ function AlbumView(canvasEl) {
     this.noteImage = new Image();
     this.noteImage.src = "note.png";
     this.noteImage.onload = function(){
+        thiss.beginAnimLoop();
         thiss.gl.bindTexture(thiss.gl.TEXTURE_2D, thiss.noteTexture);
         thiss.gl.pixelStorei(thiss.gl.UNPACK_FLIP_Y_WEBGL, false);
         // Upload the texture data to the hardware.
@@ -148,20 +154,31 @@ function AlbumView(canvasEl) {
     this.gl.enable(this.gl.DEPTH_TEST);
     this.gl.clearColor(0.0,0.0,0.0,1.0);
     this.t = 0;
-    this.animloop(this);
+    this.beginAnimLoop(this);
 }
 AlbumView.prototype.finishDragging = function(){
     this.offset -= (this.mousePos.x - this.mouseDownPos.x)*this.scrollSpeed;
 }
+
+// Begins the animation loop. Will kill the old running loop to prevent multiple anim
+// loops.
+AlbumView.prototype.beginAnimLoop = function(){
+    if (this.currentAnimationFrameRequest != null){
+        cancelAnimFrame(this.currentAnimationFrameRequest);
+    }
+    var thiss = this;
+    this.currentAnimationFrameRequest = requestAnimFrame(function(){thiss.animloop(thiss);});
+}
+
+// Called each frame of the animation. May halt the animation loop
 AlbumView.prototype.animloop = function(thiss){
     thiss.t += 1;
-    requestAnimFrame(function(){thiss.animloop(thiss);});
+    thiss.currentAnimationFrameRequest = requestAnimFrame(function(){thiss.animloop(thiss);});
     var relOffset = Math.abs(thiss.offset % 1.0);
     if (thiss.offset < 0){
         relOffset = 1.0 - relOffset;
     }
     if (thiss.isMouseDown){
-        console.log(thiss.offset);
         thiss.draw(thiss.offset - (thiss.mousePos.x - thiss.mouseDownPos.x)*thiss.scrollSpeed);
     } else {
         if (0.1 < relOffset && relOffset <= 0.5){
@@ -170,6 +187,7 @@ AlbumView.prototype.animloop = function(thiss){
             thiss.offset += .05;
         } else {
             thiss.offset = Math.round(thiss.offset);
+            cancelAnimFrame(thiss.currentAnimationFrameRequest);
         }
         thiss.draw(thiss.offset);
     }
