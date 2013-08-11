@@ -71,7 +71,7 @@ function AlbumView(canvasEl) {
         }
     };
     this.matPerspective = mat4.create();
-    mat4.perspective(35, canvasEl.width/(canvasEl.height != 0 ? canvasEl.height : 1.0), 1, 100, this.matPerspective);
+    mat4.perspective(this.matPerspective, 35*Math.PI/180, canvasEl.width/(canvasEl.height != 0 ? canvasEl.height : 1.0), 1, 100);
     this.matOrtho = mat4.create();
     mat4.ortho(0,canvasEl.width, canvasEl.height, 0, -1, 1, this.matOrtho);
     this.gl = canvasEl.getContext("webgl") || canvasEl.getContext("experimental-webgl");
@@ -154,7 +154,6 @@ function AlbumView(canvasEl) {
     this.gl.enable(this.gl.DEPTH_TEST);
     this.gl.clearColor(0.0,0.0,0.0,1.0);
     this.t = 0;
-    this.beginAnimLoop(this);
 }
 AlbumView.prototype.finishDragging = function(){
     this.offset -= (this.mousePos.x - this.mouseDownPos.x)*this.scrollSpeed;
@@ -224,8 +223,8 @@ function makeMatModelView(offset){
     var z = Math.pow(2, (-Math.pow(offset*2, 4)));
     var matModelView = mat4.create();
     mat4.identity(matModelView);
-    mat4.translate(matModelView, [x, 0.4, z-5.5]);
-    mat4.rotate(matModelView,angle, [0, 1, 0]);
+    mat4.translate(matModelView, matModelView, [x, 0.4, z-5.5]);
+    mat4.rotate(matModelView,matModelView, angle, [0, 1, 0]);
     return matModelView;
 }
 
